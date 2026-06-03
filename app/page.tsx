@@ -16,21 +16,29 @@ import {
 } from 'recharts';
 import {
   ArrowLeft,
+  AlertTriangle,
   Bell,
+  CalendarCheck,
   ChevronDown,
   CheckCircle2,
   Clock,
+  CreditCard,
   Download,
   ExternalLink,
   Eye,
   FileCheck2,
   Filter,
+  MapPinned,
   Menu,
   MessageCircle,
+  PackageCheck,
   PhoneCall,
   PlusCircle,
   Search,
+  Send,
   ShieldCheck,
+  UserCheck,
+  Video,
   X,
 } from 'lucide-react';
 import {
@@ -525,8 +533,10 @@ function WorkflowModal({
   openWindow: (window: WorkflowWindow) => void;
 }) {
   const [step, setStep] = useState(0);
+  const [activeAction, setActiveAction] = useState(window.mode || '');
   const details = useMemo(() => workflowDetails[window.group] || workflowDetails.Dashboard, [window.group]);
   const currentStep = details.steps[step] || details.steps[0];
+  const currentAction = activeAction || details.actions[0];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/45 p-6 backdrop-blur-sm">
@@ -574,15 +584,15 @@ function WorkflowModal({
                 <div className="grid gap-3 md:grid-cols-2">
                   {details.actions.map((action) => (
                     <button
-                      className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left hover:border-medsearch-teal hover:bg-medsearch-mint"
+                      className={`rounded-2xl border p-4 text-left ${currentAction === action ? 'border-medsearch-teal bg-medsearch-mint' : 'border-slate-100 bg-slate-50 hover:border-medsearch-teal hover:bg-medsearch-mint'}`}
                       key={action}
-                      onClick={() => openWindow({ title: action, group: window.group, subject: `${action} for ${window.title}`, mode: action })}
+                      onClick={() => setActiveAction(action)}
                     >
                       <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-white text-medsearch-teal">
                         <ExternalLink size={18} />
                       </span>
                       <strong>{action}</strong>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">Open a focused admin window and continue this operational task.</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">Show what this admin action does in the live platform workflow.</p>
                     </button>
                   ))}
                 </div>
@@ -604,10 +614,12 @@ function WorkflowModal({
               </section>
             </div>
 
+            <DemoWorkspace window={window} action={currentAction} openWindow={openWindow} />
+
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <ActionTile icon={Eye} title="Preview patient view" text="Open the matching app or web journey from the dashboard." onClick={() => openWindow({ title: 'Patient View Preview', group: window.group, subject: `Preview for ${window.title}` })} />
-              <ActionTile icon={MessageCircle} title="Open communication" text="Review chat, comments, notifications or support messages." onClick={() => openWindow({ title: 'Communication Thread', group: window.group, subject: window.title })} />
-              <ActionTile icon={PhoneCall} title="Contact or escalate" text="Call provider, assign reviewer or escalate to operations." onClick={() => openWindow({ title: 'Escalation Window', group: window.group, subject: window.title })} />
+              <ActionTile icon={Eye} title="Preview patient view" text="Open the matching app or web journey from the dashboard." onClick={() => setActiveAction('Preview patient flow')} />
+              <ActionTile icon={MessageCircle} title="Open communication" text="Review chat, comments, notifications or support messages." onClick={() => setActiveAction('Open communication')} />
+              <ActionTile icon={PhoneCall} title="Contact or escalate" text="Call provider, assign reviewer or escalate to operations." onClick={() => setActiveAction('Contact or escalate')} />
             </div>
 
             <section className="mt-6 rounded-3xl border border-teal-100 bg-slate-50 p-6">
@@ -625,6 +637,201 @@ function WorkflowModal({
         </div>
       </section>
     </div>
+  );
+}
+
+function DemoWorkspace({
+  window,
+  action,
+  openWindow,
+}: {
+  window: WorkflowWindow;
+  action: string;
+  openWindow: (window: WorkflowWindow) => void;
+}) {
+  const key = `${window.group} ${window.title} ${action}`.toLowerCase();
+
+  if (key.includes('booking') || key.includes('appointment')) {
+    return (
+      <DemoSection title="Bookings calendar" subtitle="Admin can inspect and manage the exact booking journey patients use.">
+        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <DemoCard icon={CalendarCheck} title="Today, 14:30" text="Martha Tembo booked Blood Pressure Check at Fine Pharmacy." badge="Confirmed" />
+          <div className="rounded-3xl bg-slate-50 p-5">
+            <h4 className="font-black">Booking actions</h4>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {['Confirm slot', 'Reschedule', 'Assign pharmacist', 'Send reminder'].map((item) => (
+                <button className="rounded-2xl bg-white p-4 text-left text-sm font-black text-slate-700 hover:bg-medsearch-mint" key={item}>{item}</button>
+              ))}
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">Investor demo: this shows how MedSearch controls service bookings, calendar capacity and patient reminders.</p>
+          </div>
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('facility') || key.includes('hospital') || key.includes('pharmac') || key.includes('profile')) {
+    return (
+      <DemoSection title="Facility control window" subtitle="Admin reviews the same facility profile patients see in the app and website.">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <DemoCard icon={ShieldCheck} title="Fine Pharmacy" text="Verified provider, open 08:00-22:00, delivery available." badge="Live" />
+          <DemoCard icon={MapPinned} title="Map & GPS" text="1.2 km from current user, route preview and location pin verified." badge="Checked" />
+          <DemoCard icon={PackageCheck} title="Stock & services" text="120 Paracetamol packs, 40 Amoxicillin packs, BP check and malaria test active." badge="Synced" />
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+          {['Edit profile', 'Open inventory', 'Open services', 'Publish to app'].map((item) => (
+            <button className="rounded-2xl bg-medsearch-teal px-4 py-3 text-sm font-black text-white" key={item} onClick={() => openWindow({ title: item, group: item.includes('inventory') ? 'Medicine Management' : 'Facility Management', subject: window.title, mode: item })}>{item}</button>
+          ))}
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('medicine') || key.includes('inventory') || key.includes('stock') || key.includes('catalogue')) {
+    return (
+      <DemoSection title="Medicine inventory control" subtitle="Admin can see demand, brands, stock, prescription status and pharmacies carrying each medicine.">
+        <div className="grid gap-4 lg:grid-cols-4">
+          {[
+            ['Amoxicillin 500mg', 'Antibiotic · Denk/Shalina brands · Prescription required', '40 packs'],
+            ['Paracetamol 500mg', 'Analgesic · Yashi and generic brands · OTC', '120 packs'],
+            ['Metformin 500mg', 'Diabetes · Prescription required · Low stock alert', '18 packs'],
+            ['Chesty Cough Syrup', 'Respiratory · OTC · popular near Lusaka', '32 bottles'],
+          ].map(([name, text, badge]) => (
+            <DemoCard icon={PackageCheck} title={name} text={text} badge={badge} key={name} />
+          ))}
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('approve') || key.includes('reject') || key.includes('verification') || key.includes('application')) {
+    return (
+      <DemoSection title="Verification decision desk" subtitle="Admin validates documents before a provider is visible to patients.">
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-3xl bg-slate-50 p-5">
+            <h4 className="font-black">Documents submitted</h4>
+            {['Facility license', 'Professional registration', 'Physical address', 'Contact person'].map((item) => (
+              <div className="mt-3 flex items-center justify-between rounded-2xl bg-white p-4" key={item}>
+                <span className="font-bold">{item}</span>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">Valid</span>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-3xl bg-slate-50 p-5">
+            <h4 className="font-black">Decision actions</h4>
+            <div className="mt-4 grid gap-3">
+              <button className="rounded-2xl bg-medsearch-teal p-4 text-left font-black text-white">Approve and publish profile</button>
+              <button className="rounded-2xl bg-slate-950 p-4 text-left font-black text-white">Reject with reason</button>
+              <button className="rounded-2xl bg-white p-4 text-left font-black text-slate-700">Request missing information</button>
+            </div>
+          </div>
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('communication') || key.includes('chat') || key.includes('message') || key.includes('consultation') || key.includes('video')) {
+    return (
+      <DemoSection title="Communication and telemedicine monitor" subtitle="Admin can supervise patient support, pharmacy chats and video consultations.">
+        <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+          <div className="rounded-3xl bg-slate-50 p-5">
+            <div className="max-w-md rounded-2xl bg-white p-4 text-sm">Patient: Do you have insulin available today?</div>
+            <div className="ml-auto mt-3 max-w-md rounded-2xl bg-medsearch-teal p-4 text-sm font-bold text-white">Fine Pharmacy: Yes, Humulin and Mixtard are available.</div>
+            <div className="mt-4 flex gap-2">
+              <button className="rounded-full bg-medsearch-mint px-4 py-2 text-xs font-black text-medsearch-teal"><Send size={14} className="inline" /> Send note</button>
+              <button className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-700"><Video size={14} className="inline" /> Join video</button>
+            </div>
+          </div>
+          <DemoCard icon={Video} title="Live consult" text="12 active sessions, 3 waiting, average wait time 4 minutes." badge="Active" />
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('billing') || key.includes('revenue') || key.includes('invoice') || key.includes('subscription')) {
+    return (
+      <DemoSection title="Revenue and subscription desk" subtitle="Admin can manage facility subscriptions, transactions and promoted listings.">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <DemoCard icon={CreditCard} title="Facility subscription" text="Fine Pharmacy Premium listing, telemedicine and medicine ordering enabled." badge="ZMW 1,500/mo" />
+          <DemoCard icon={CreditCard} title="Transaction review" text="Medicine order paid by Airtel Money, delivery fee included." badge="Settled" />
+          <DemoCard icon={Download} title="Investor report" text="Export monthly revenue, facility growth and conversion metrics." badge="Ready" />
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('community') || key.includes('post') || key.includes('content') || key.includes('poll')) {
+    return (
+      <DemoSection title="Community moderation desk" subtitle="Admin can review health posts, videos, comments, events and reports.">
+        <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+          <div className="rounded-3xl bg-slate-50 p-5">
+            <p className="text-sm font-bold text-medsearch-teal">Reported post</p>
+            <h4 className="mt-2 text-xl font-black">How to use an inhaler</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Fine Pharmacy video · 25 likes · 14 comments · 2 reports for review.</p>
+            <div className="mt-4 flex gap-2">
+              <button className="rounded-full bg-medsearch-teal px-4 py-2 text-xs font-black text-white">Approve</button>
+              <button className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white">Remove</button>
+              <button className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-700">Warn author</button>
+            </div>
+          </div>
+          <DemoCard icon={AlertTriangle} title="Safety queue" text="3 misinformation alerts, 9 pending comments, 4 campaign posts awaiting approval." badge="Needs review" />
+        </div>
+      </DemoSection>
+    );
+  }
+
+  if (key.includes('patient') || key.includes('public') || key.includes('preview')) {
+    return (
+      <DemoSection title="Patient journey preview" subtitle="Admin can test the real app and web flow before publishing changes.">
+        <div className="grid gap-4 lg:grid-cols-5">
+          {['Home modules', 'Choose pharmacy', 'Open profile', 'Book service', 'Chat or order'].map((item, index) => (
+            <div className="rounded-3xl bg-slate-50 p-5" key={item}>
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-medsearch-teal text-sm font-black text-white">{index + 1}</span>
+              <h4 className="mt-4 font-black">{item}</h4>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Matches the app and website patient-facing workflow.</p>
+            </div>
+          ))}
+        </div>
+      </DemoSection>
+    );
+  }
+
+  return (
+    <DemoSection title="Operational action preview" subtitle="This action now shows the next administrative task instead of ending on a static card.">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <DemoCard icon={UserCheck} title="Open record" text="View complete account, provider, medicine or service data." badge="Step 1" />
+        <DemoCard icon={PlusCircle} title="Make change" text="Approve, edit, publish, assign, suspend or export depending on the module." badge="Step 2" />
+        <DemoCard icon={FileCheck2} title="Audit outcome" text="Every action records who changed what and when." badge="Step 3" />
+      </div>
+    </DemoSection>
+  );
+}
+
+function DemoSection({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-6 rounded-3xl border border-teal-100 bg-white p-6 shadow-sm">
+      <div className="mb-5">
+        <p className="text-sm font-bold text-medsearch-teal">Investor demo workflow</p>
+        <h3 className="text-2xl font-black">{title}</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{subtitle}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function DemoCard({ icon: Icon, title, text, badge }: { icon: typeof Eye; title: string; text: string; badge: string }) {
+  return (
+    <article className="rounded-3xl bg-slate-50 p-5">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-medsearch-teal">
+          <Icon size={20} />
+        </span>
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-medsearch-teal">{badge}</span>
+      </div>
+      <h4 className="font-black">{title}</h4>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
+    </article>
   );
 }
 
